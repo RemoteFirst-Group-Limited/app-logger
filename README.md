@@ -1,6 +1,6 @@
 # Laravel App Logger
 
-`remotefirst-group-limited/app-logger` — публичный Composer-пакет с единым строгим `AppLogger` для Laravel 10/11.
+`remotefirst-group-limited/app-logger` — публичный Composer-пакет с единым строгим фасадом `AppLogger` и реализацией `Logger` для Laravel 10/11.
 
 Пакет не добавляет новые каналы или драйверы логирования. Он просто оборачивает стандартный `Psr\Log\LoggerInterface` и всегда добавляет `index_name` в контекст.
 
@@ -18,11 +18,11 @@ Service provider подключается автоматически через 
 ### Через DI
 
 ```php
-use AppLogger\AppLogger;
+use AppLogger\Logging\Logger;
 
 final class ReportService
 {
-    public function __construct(private readonly AppLogger $logger)
+    public function __construct(private readonly Logger $logger)
     {
     }
 

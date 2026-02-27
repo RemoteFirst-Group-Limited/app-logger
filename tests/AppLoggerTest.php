@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace AppLogger\Tests;
 
-use AppLogger\AppLogger;
+use AppLogger\Logging\Logger;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
@@ -13,7 +13,7 @@ final class AppLoggerTest extends TestCase
     public function testErrorUsesDefaultIndexName(): void
     {
         $logger = $this->createMock(LoggerInterface::class);
-        $appLogger = new AppLogger($logger);
+        $appLogger = new Logger($logger);
 
         $logger->expects($this->once())
             ->method('log')
@@ -25,7 +25,7 @@ final class AppLoggerTest extends TestCase
     public function testErrorUsesExplicitIndexName(): void
     {
         $logger = $this->createMock(LoggerInterface::class);
-        $appLogger = new AppLogger($logger);
+        $appLogger = new Logger($logger);
 
         $logger->expects($this->once())
             ->method('log')
@@ -37,7 +37,7 @@ final class AppLoggerTest extends TestCase
     public function testIndexNameIsOverriddenWhenAlreadyPresentInContext(): void
     {
         $logger = $this->createMock(LoggerInterface::class);
-        $appLogger = new AppLogger($logger);
+        $appLogger = new Logger($logger);
 
         $logger->expects($this->once())
             ->method('log')
@@ -55,7 +55,7 @@ final class AppLoggerTest extends TestCase
     public function testLogProxiesLevelAndAddsIndexName(): void
     {
         $logger = $this->createMock(LoggerInterface::class);
-        $appLogger = new AppLogger($logger);
+        $appLogger = new Logger($logger);
 
         $logger->expects($this->once())
             ->method('log')

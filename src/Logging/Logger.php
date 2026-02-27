@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace AppLogger;
+namespace AppLogger\Logging;
 
 use Psr\Log\LoggerInterface;
 use Stringable;
 
-final class AppLogger
+final class Logger
 {
     public function __construct(private readonly LoggerInterface $logger)
     {

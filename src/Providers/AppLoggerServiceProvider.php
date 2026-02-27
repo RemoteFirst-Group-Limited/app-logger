@@ -2,8 +2,9 @@
 
 declare(strict_types=1);
 
-namespace AppLogger;
+namespace AppLogger\Providers;
 
+use AppLogger\Logging\Logger;
 use Illuminate\Support\ServiceProvider;
 use Psr\Log\LoggerInterface;
 
@@ -14,10 +15,10 @@ final class AppLoggerServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        $this->app->singleton('app_logger', function ($app): AppLogger {
-            return new AppLogger($app->make(LoggerInterface::class));
+        $this->app->singleton('app_logger', function ($app): Logger {
+            return new Logger($app->make(LoggerInterface::class));
         });
 
-        $this->app->alias('app_logger', AppLogger::class);
+        $this->app->alias('app_logger', Logger::class);
     }
 }
