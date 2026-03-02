@@ -73,6 +73,18 @@ final class Logger implements LoggerInterface
     }
 
     /**
+     * Записывает ticket-сообщение с указанным индексом.
+     *
+     * @param string|Stringable $message Сообщение для записи в лог.
+     * @param string $indexName Значение index_name для маршрутизации в целевой индекс.
+     * @param array $context Дополнительный контекст логирования.
+     */
+    public function forTicket(string|Stringable $message, string $indexName, array $context = []): void
+    {
+        $this->write('error', $message, $indexName, $context);
+    }
+
+    /**
      * Записывает сообщение уровня warning.
      */
     public function warning(string|Stringable $message, array $context = []): void

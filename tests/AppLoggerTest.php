@@ -24,7 +24,7 @@ final class AppLoggerTest extends TestCase
         $appLogger->error('Ошибка по умолчанию');
     }
 
-    public function testLogProxiesLevelAndAddsIndexName(): void
+    public function testLogProxiesLevelAndAddsDefaultErrorIndexName(): void
     {
         $logger = $this->createMock(LoggerInterface::class);
         $appLogger = new Logger($logger);
@@ -33,10 +33,10 @@ final class AppLoggerTest extends TestCase
             ->method('log')
             ->with('warning', 'Проксирование уровня', [
                 'request_id' => 'req-1',
-                'index_name' => 'security',
+                'index_name' => 'error',
             ]);
 
-        $appLogger->log('warning', 'Проксирование уровня', 'security', [
+        $appLogger->log('warning', 'Проксирование уровня', [
             'request_id' => 'req-1',
         ]);
     }
@@ -62,7 +62,7 @@ final class AppLoggerTest extends TestCase
         $appLogger
             ->channel('security')
             ->withContext(['request_id' => 'req-42'])
-            ->info('Цепочка работает', 'audit', ['user_id' => 100]);
+            ->forTicket('Цепочка работает', 'audit', ['user_id' => 100]);
 
         $this->assertSame([
             ['method' => 'channel', 'args' => ['security']],
@@ -71,7 +71,7 @@ final class AppLoggerTest extends TestCase
 
         $this->assertSame([
             [
-                'level' => 'info',
+                'level' => 'error',
                 'message' => 'Цепочка работает',
                 'context' => [
                     'user_id' => 100,
@@ -87,7 +87,7 @@ final class AppLoggerTest extends TestCase
 
         $appLogger
             ->withContext(['trace_id' => 't-1'])
-            ->info('Magic call', 'ops');
+            ->forTicket('Magic call', 'ops');
 
         $this->assertSame([
             ['method' => 'withContext', 'args' => [['trace_id' => 't-1']]],
@@ -95,7 +95,7 @@ final class AppLoggerTest extends TestCase
 
         $this->assertSame([
             [
-                'level' => 'info',
+                'level' => 'error',
                 'message' => 'Magic call',
                 'context' => ['index_name' => 'ops'],
             ],

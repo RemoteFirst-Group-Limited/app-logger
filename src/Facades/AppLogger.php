@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Facade;
  * @method static void alert(string|\Stringable $message, array $context = [])
  * @method static void critical(string|\Stringable $message, array $context = [])
  * @method static void error(string|\Stringable $message, array $context = [])
+ * @method static void forTicket(string|\Stringable $message, string $indexName, array $context = [])
  * @method static void warning(string|\Stringable $message, array $context = [])
  * @method static void notice(string|\Stringable $message, array $context = [])
  * @method static void info(string|\Stringable $message, array $context = [])
