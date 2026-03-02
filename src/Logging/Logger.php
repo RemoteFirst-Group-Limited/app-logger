@@ -19,8 +19,23 @@ use Stringable;
  * @method self withoutContext()
  * @method mixed listen(\Closure $callback)
  */
-final class Logger
+final class Logger implements LoggerInterface
 {
+    /**
+     * Имя индекса для сообщений с уровнем error и выше.
+     */
+    private const INDEX_ERROR = 'error';
+
+    /**
+     * Имя индекса для информационных сообщений.
+     */
+    private const INDEX_INFO = 'info';
+
+    /**
+     * Имя индекса для отладочных сообщений.
+     */
+    private const INDEX_DEBUG = 'debug';
+
     public function __construct(private readonly LoggerInterface $logger)
     {
     }
@@ -28,73 +43,73 @@ final class Logger
     /**
      * Записывает сообщение уровня emergency.
      */
-    public function emergency(string|Stringable $message, string $indexName = 'error', array $context = []): void
+    public function emergency(string|Stringable $message, array $context = []): void
     {
-        $this->write('emergency', $message, $indexName, $context);
+        $this->write('emergency', $message, self::INDEX_ERROR, $context);
     }
 
     /**
      * Записывает сообщение уровня alert.
      */
-    public function alert(string|Stringable $message, string $indexName = 'error', array $context = []): void
+    public function alert(string|Stringable $message, array $context = []): void
     {
-        $this->write('alert', $message, $indexName, $context);
+        $this->write('alert', $message, self::INDEX_ERROR, $context);
     }
 
     /**
      * Записывает сообщение уровня critical.
      */
-    public function critical(string|Stringable $message, string $indexName = 'error', array $context = []): void
+    public function critical(string|Stringable $message, array $context = []): void
     {
-        $this->write('critical', $message, $indexName, $context);
+        $this->write('critical', $message, self::INDEX_ERROR, $context);
     }
 
     /**
      * Записывает сообщение уровня error.
      */
-    public function error(string|Stringable $message, string $indexName = 'error', array $context = []): void
+    public function error(string|Stringable $message, array $context = []): void
     {
-        $this->write('error', $message, $indexName, $context);
+        $this->write('error', $message, self::INDEX_ERROR, $context);
     }
 
     /**
      * Записывает сообщение уровня warning.
      */
-    public function warning(string|Stringable $message, string $indexName = 'error', array $context = []): void
+    public function warning(string|Stringable $message, array $context = []): void
     {
-        $this->write('warning', $message, $indexName, $context);
+        $this->write('warning', $message, self::INDEX_ERROR, $context);
     }
 
     /**
      * Записывает сообщение уровня notice.
      */
-    public function notice(string|Stringable $message, string $indexName = 'error', array $context = []): void
+    public function notice(string|Stringable $message, array $context = []): void
     {
-        $this->write('notice', $message, $indexName, $context);
+        $this->write('notice', $message, self::INDEX_ERROR, $context);
     }
 
     /**
      * Записывает сообщение уровня info.
      */
-    public function info(string|Stringable $message, string $indexName = 'error', array $context = []): void
+    public function info(string|Stringable $message, array $context = []): void
     {
-        $this->write('info', $message, $indexName, $context);
+        $this->write('info', $message, self::INDEX_INFO, $context);
     }
 
     /**
      * Записывает сообщение уровня debug.
      */
-    public function debug(string|Stringable $message, string $indexName = 'error', array $context = []): void
+    public function debug(string|Stringable $message, array $context = []): void
     {
-        $this->write('debug', $message, $indexName, $context);
+        $this->write('debug', $message, self::INDEX_DEBUG, $context);
     }
 
     /**
      * Записывает сообщение указанного уровня.
      */
-    public function log(string $level, string|Stringable $message, string $indexName = 'error', array $context = []): void
+    public function log($level, string|Stringable $message, array $context = []): void
     {
-        $this->write($level, $message, $indexName, $context);
+        $this->write((string) $level, $message, self::INDEX_ERROR, $context);
     }
 
     /**
