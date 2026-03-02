@@ -4,9 +4,21 @@ declare(strict_types=1);
 
 namespace AppLogger\Logging;
 
+use BadMethodCallException;
 use Psr\Log\LoggerInterface;
 use Stringable;
 
+/**
+ * @mixin \Psr\Log\LoggerInterface
+ *
+ * @method self channel(string|null $channel = null)
+ * @method self stack(array $channels, string|null $channel = null)
+ * @method self driver(string|null $driver = null)
+ * @method self build(array $config)
+ * @method self withContext(array $context = [])
+ * @method self withoutContext()
+ * @method mixed listen(\Closure $callback)
+ */
 final class Logger
 {
     public function __construct(private readonly LoggerInterface $logger)
@@ -83,6 +95,31 @@ final class Logger
     public function log(string $level, string|Stringable $message, string $indexName = 'error', array $context = []): void
     {
         $this->write($level, $message, $indexName, $context);
+    }
+
+    /**
+     * Делегирует неизвестные методы реальному Laravel logger/manager.
+     *
+     * Если метод возвращает логгер, оборачивает его в AppLogger\Logging\Logger
+     * чтобы fluent-цепочки продолжали добавлять index_name.
+     */
+    public function __call(string $method, array $arguments): mixed
+    {
+        if (!is_callable([$this->logger, $method])) {
+            throw new BadMethodCallException(sprintf('Method %s::%s is not callable.', $this->logger::class, $method));
+        }
+
+        $result = $this->logger->{$method}(...$arguments);
+
+        if ($result === $this->logger) {
+            return $this;
+        }
+
+        if ($result instanceof LoggerInterface) {
+            return new self($result);
+        }
+
+        return $result;
     }
 
     /**

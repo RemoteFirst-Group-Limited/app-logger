@@ -2,7 +2,7 @@
 
 `remotefirst-group-limited/app-logger` — публичный Composer-пакет с единым строгим фасадом `AppLogger` и реализацией `Logger` для Laravel 10/11.
 
-Пакет не добавляет новые каналы или драйверы логирования. Он просто оборачивает стандартный `Psr\Log\LoggerInterface` и всегда добавляет `index_name` в контекст.
+Пакет не добавляет новые каналы или драйверы логирования. Он оборачивает стандартный `Psr\Log\LoggerInterface`, всегда добавляет `index_name` в контекст для бизнес-методов и проксирует неизвестные методы (`channel`, `stack`, `driver`, `withContext` и т.д.) к внутреннему Laravel logger/manager.
 
 ## Особенности
 
@@ -10,6 +10,7 @@
 - Значение `index_name` по умолчанию: `error`.
 - `index_name` всегда устанавливается в контекст и перезаписывает существующее значение.
 - Интеграция через DI и Facade.
+- Fluent-цепочки не ломаются: если passthrough-метод возвращает логгер, он снова оборачивается в `AppLogger\Logging\Logger`.
 
 Service provider подключается автоматически через Laravel auto-discovery.
 
@@ -44,7 +45,7 @@ AppLogger::warning('Подозрительное действие', 'security', 
 
 ## API
 
-Поддерживаются только следующие сигнатуры:
+Строго типизированные бизнес-сигнатуры:
 
 - `emergency(string|\Stringable $message, string $indexName = 'error', array $context = []): void`
 - `alert(string|\Stringable $message, string $indexName = 'error', array $context = []): void`
@@ -62,3 +63,6 @@ AppLogger::warning('Подозрительное действие', 'security', 
 ./vendor/bin/phpunit
 ./vendor/bin/pest
 ```
+
+
+Остальные методы Laravel logger/manager доступны через proxy (`__call`) и делегируются 1:1 на внутренний объект.
