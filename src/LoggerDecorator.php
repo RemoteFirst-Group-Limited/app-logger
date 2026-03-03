@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace AppLogger\Logging;
+namespace AppLogger;
 
 use BadMethodCallException;
 use Psr\Log\LoggerInterface;
@@ -19,7 +19,7 @@ use Stringable;
  * @method self withoutContext()
  * @method mixed listen(\Closure $callback)
  */
-final class Logger implements LoggerInterface
+class LoggerDecorator implements LoggerInterface
 {
     /**
      * Имя индекса для сообщений с уровнем error и выше.
@@ -121,13 +121,21 @@ final class Logger implements LoggerInterface
      */
     public function log($level, string|Stringable $message, array $context = []): void
     {
-        $this->write((string) $level, $message, self::INDEX_ERROR, $context);
+        $level = (string) $level;
+
+        $indexName = match ($level) {
+            'debug' => self::INDEX_DEBUG,
+            'info', 'notice' => self::INDEX_INFO,
+            default => self::INDEX_ERROR,
+        };
+
+        $this->write($level, $message, $indexName, $context);
     }
 
     /**
      * Делегирует неизвестные методы реальному Laravel logger/manager.
      *
-     * Если метод возвращает логгер, оборачивает его в AppLogger\Logging\Logger
+     * Если метод возвращает логгер, оборачивает его в AppLogger\LoggerDecorator
      * чтобы fluent-цепочки продолжали добавлять index_name.
      */
     public function __call(string $method, array $arguments): mixed
@@ -143,7 +151,7 @@ final class Logger implements LoggerInterface
         }
 
         if ($result instanceof LoggerInterface) {
-            return new self($result);
+            return new static($result);
         }
 
         return $result;

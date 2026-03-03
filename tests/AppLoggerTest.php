@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace AppLogger\Tests;
 
-use AppLogger\Logging\Logger;
+use AppLogger\LoggerDecorator;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use Psr\Log\LogLevel;
@@ -15,7 +15,7 @@ final class AppLoggerTest extends TestCase
     public function testErrorUsesDefaultIndexName(): void
     {
         $logger = $this->createMock(LoggerInterface::class);
-        $appLogger = new Logger($logger);
+        $appLogger = new LoggerDecorator($logger);
 
         $logger->expects($this->once())
             ->method('log')
@@ -27,7 +27,7 @@ final class AppLoggerTest extends TestCase
     public function testLogProxiesLevelAndAddsDefaultErrorIndexName(): void
     {
         $logger = $this->createMock(LoggerInterface::class);
-        $appLogger = new Logger($logger);
+        $appLogger = new LoggerDecorator($logger);
 
         $logger->expects($this->once())
             ->method('log')
@@ -41,10 +41,29 @@ final class AppLoggerTest extends TestCase
         ]);
     }
 
+
+    public function testLogSelectsIndexByLevel(): void
+    {
+        $baseLogger = new FakeLogger();
+        $appLogger = new LoggerDecorator($baseLogger);
+
+        $appLogger->log('debug', 'debug message');
+        $appLogger->log('info', 'info message');
+        $appLogger->log('notice', 'notice message');
+        $appLogger->log('error', 'error message');
+
+        $this->assertSame([
+            ['level' => 'debug', 'message' => 'debug message', 'context' => ['index_name' => 'debug']],
+            ['level' => 'info', 'message' => 'info message', 'context' => ['index_name' => 'info']],
+            ['level' => 'notice', 'message' => 'notice message', 'context' => ['index_name' => 'info']],
+            ['level' => 'error', 'message' => 'error message', 'context' => ['index_name' => 'error']],
+        ], $baseLogger->logs);
+    }
+
     public function testPassthroughMethodsAreDelegatedWithOriginalArguments(): void
     {
         $baseLogger = new FakeLogger();
-        $appLogger = new Logger($baseLogger);
+        $appLogger = new LoggerDecorator($baseLogger);
 
         $result = $appLogger->passthrough('alpha', 7);
 
@@ -57,7 +76,7 @@ final class AppLoggerTest extends TestCase
     public function testFluentChainDoesNotBreakAndPreservesIndexNameInjection(): void
     {
         $baseLogger = new FakeLogger();
-        $appLogger = new Logger($baseLogger);
+        $appLogger = new LoggerDecorator($baseLogger);
 
         $appLogger
             ->channel('security')
@@ -83,7 +102,7 @@ final class AppLoggerTest extends TestCase
     public function testMagicCallPassthroughWorksForLogManagerLikeObjects(): void
     {
         $baseLogger = new MagicLogger();
-        $appLogger = new Logger($baseLogger);
+        $appLogger = new LoggerDecorator($baseLogger);
 
         $appLogger
             ->withContext(['trace_id' => 't-1'])

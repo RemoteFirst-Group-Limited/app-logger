@@ -22,13 +22,6 @@
             "AppLogger\\Tests\\": "tests/"
         }
     },
-    "extra": {
-        "laravel": {
-            "providers": [
-                "AppLogger\\Providers\\AppLoggerServiceProvider"
-            ]
-        }
-    },
     "scripts": {
         "test": "phpunit"
     },
