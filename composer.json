@@ -1,33 +1,45 @@
 {
-    "name": "remotefirst-group-limited/app-logger",
-    "description": "Строгая обёртка AppLogger для Laravel с обязательной передачей index_name.",
-    "type": "library",
-    "license": "MIT",
-    "require": {
-        "php": "^8.2",
-        "illuminate/support": "^10.0|^11.0|^12.0",
-        "psr/log": "^2.0|^3.0"
-    },
-    "require-dev": {
-        "phpunit/phpunit": "^10.5",
-        "pestphp/pest": "^2.36"
-    },
-    "autoload": {
-        "psr-4": {
-            "AppLogger\\": "src/"
-        }
-    },
-    "autoload-dev": {
-        "psr-4": {
-            "AppLogger\\Tests\\": "tests/"
-        }
-    },
-    "scripts": {
-        "test": "phpunit"
-    },
-    "config": {
-        "allow-plugins": {
-            "pestphp/pest-plugin": true
-        }
-    }
+	"name": "remotefirst-group-limited/app-logger",
+	"description": "Строгая обёртка AppLogger для Laravel с обязательной передачей index_name.",
+	"type": "library",
+	"license": "MIT",
+	"version": "1.2.0",
+	"require": {
+		"php": "^8.2",
+		"illuminate/config": "^10.0|^11.0|^12.0|^13.0",
+		"illuminate/encryption": "^10.0|^11.0|^12.0|^13.0",
+		"illuminate/events": "^10.0|^11.0|^12.0|^13.0",
+		"illuminate/queue": "^10.0|^11.0|^12.0|^13.0",
+		"illuminate/support": "^10.0|^11.0|^12.0|^13.0",
+		"psr/log": "^2.0|^3.0"
+	},
+	"require-dev": {
+		"pestphp/pest": "^2.36|^3.0|^4.0",
+		"phpunit/phpunit": "^10.5|^11.0|^12.0"
+	},
+	"autoload": {
+		"psr-4": {
+			"AppLogger\\": "src/"
+		}
+	},
+	"autoload-dev": {
+		"psr-4": {
+			"AppLogger\\Tests\\": "tests/"
+		}
+	},
+	"scripts": {
+		"test": "pest"
+	},
+	"config": {
+		"allow-plugins": {
+			"pestphp/pest-plugin": true
+		}
+	},
+	"extra": {
+		"laravel": {
+			"providers": [
+				"AppLogger\\AppLoggerServiceProvider"
+			]
+		}
+	}
 }

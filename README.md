@@ -1,60 +1,109 @@
-# Laravel App Logger
+# App Logger
 
-`remotefirst-group-limited/app-logger` — публичный Composer-пакет с декоратором `LoggerDecorator` для Laravel 10/11.
+Composer-модуль добавляет обязательный `index_name` в сообщения Laravel и автоматически
+логирует повторные попытки и события `JobFailed`. Поддерживаются Laravel 10–13.
 
-Пакет не добавляет новые каналы или драйверы логирования. Он оборачивает стандартный `Psr\Log\LoggerInterface`, всегда добавляет `index_name` в контекст и проксирует неизвестные методы (`channel`, `stack`, `driver`, `withContext` и т.д.) к внутреннему logger/manager.
+## Подключение
 
-## Особенности
+Подключите пакет как Composer-зависимость:
 
-- Строгие сигнатуры: для стандартных уровней `message`, `context`; для ticket-логов `message`, `indexName`, `context`.
-- Значение `index_name` по умолчанию: `error`.
-- `index_name` всегда устанавливается в контекст и перезаписывает существующее значение.
-- Интеграция через DI (без Facade и Service Provider).
-- Fluent-цепочки не ломаются: если passthrough-метод возвращает логгер, он снова оборачивается в `AppLogger\LoggerDecorator`.
-
-
-## Использование
-
-### Через DI
-
-```php
-use AppLogger\LoggerDecorator;
-
-final class ReportService
+```json
 {
-    public function __construct(private readonly LoggerDecorator $logger)
-    {
-    }
-
-    public function handle(): void
-    {
-        $this->logger->error('Ошибка обработки');
-        $this->logger->forTicket('Отчёт создан', 'reports', ['report_id' => 10]);
-    }
+	"require": {
+		"remotefirst-group-limited/app-logger": "^1.2"
+	}
 }
 ```
 
-## API
+Если пакет подключается напрямую из GitHub, добавьте VCS-репозиторий:
 
-Строго типизированные бизнес-сигнатуры:
-
-- `emergency(string|\Stringable $message, array $context = []): void`
-- `alert(string|\Stringable $message, array $context = []): void`
-- `critical(string|\Stringable $message, array $context = []): void`
-- `error(string|\Stringable $message, array $context = []): void`
-- `forTicket(string|\Stringable $message, string $indexName, array $context = []): void`
-- `warning(string|\Stringable $message, array $context = []): void`
-- `notice(string|\Stringable $message, array $context = []): void`
-- `info(string|\Stringable $message, array $context = []): void`
-- `debug(string|\Stringable $message, array $context = []): void`
-- `log(mixed $level, string|\Stringable $message, array $context = []): void`
-
-## Тесты
-
-```bash
-./vendor/bin/phpunit
-./vendor/bin/pest
+```json
+{
+	"repositories": [
+		{
+			"type": "vcs",
+			"url": "https://github.com/RemoteFirst-Group-Limited/app-logger"
+		}
+	]
+}
 ```
 
+Провайдер `AppLogger\AppLoggerServiceProvider` регистрируется через Laravel package
+discovery. Обработчик failed jobs включён по умолчанию.
 
-Остальные методы Laravel logger/manager доступны через proxy (`__call`) и делегируются 1:1 на внутренний объект.
+## Настройка
+
+В конфигурации приложения можно переопределить параметры пакета:
+
+```php
+<?php
+
+return [
+	"logger" => [
+		"decorate" => env("APP_LOGGER_DECORATE", true),
+	],
+	"retry_jobs" => [
+		"enabled" => env("APP_LOGGER_RETRY_JOBS_ENABLED", true),
+		"index_name" => env("APP_LOGGER_RETRY_JOB_INDEX", "warning"),
+	],
+	"failed_jobs" => [
+		"enabled" => env("APP_LOGGER_FAILED_JOBS_ENABLED", true),
+		"index_name" => env("APP_LOGGER_FAILED_JOB_INDEX", "error"),
+		"payload_limit_bytes" => (int)env("APP_LOGGER_FAILED_JOB_PAYLOAD_LIMIT_BYTES", 8192),
+		"context_limit_bytes" => (int)env("APP_LOGGER_FAILED_JOB_CONTEXT_LIMIT_BYTES", 32768),
+		"context_enrichers" => [],
+	],
+];
+```
+
+## Повторные попытки очереди
+
+Пакет отслеживает стандартные события Laravel Queue. Исключение промежуточной попытки
+записывается с уровнем `warning` и `index_name=warning`. Контекст содержит класс задания,
+`job_uuid`, соединение, очередь, текущую и максимальную попытки, класс исключения и его
+сообщение.
+
+Ошибки, записанные приложением во время активной попытки задания, также направляются в
+warning. После исчерпания попыток пакет создаёт финальное событие `JobFailed` с уровнем
+`error` и `index_name=error`. Стандартный повторный репорт того же исключения Laravel
+подавляется.
+
+История повторов восстанавливается по `job_uuid`: каждая причина хранится отдельным
+warning-событием, а финальный error содержит последнюю причину и число попыток.
+
+Параметр `logger.decorate` позволяет отключить замену общего Laravel-логгера, если
+приложение уже маршрутизирует сообщения собственным Monolog-процессором.
+
+Пакет автоматически добавляет безопасные непосредственные свойства Job: строки,
+числа, логические значения, enum, даты и массивы из таких значений. Произвольные
+объекты, Eloquent-модели и DTO рекурсивно не раскрываются. Пустые значения не
+добавляются.
+
+Каждое поле с именем `payload` рекурсивно ограничивается указанным количеством байт.
+Вместо исходного значения в лог записываются признак обрезки, исходный размер и
+безопасная начальная часть значения. Общий необязательный контекст ограничивается
+параметром `context_limit_bytes`.
+
+## Дополнительный контекст
+
+Сервис может добавить собственный контекст через реализацию
+`AppLogger\Contracts\FailedJobContextEnricherInterface`. Класс реализации необходимо
+зарегистрировать в `failed_jobs.context_enrichers`.
+
+Обогатитель получает объект задания и исключение. Он должен возвращать ассоциативный
+массив только с разрешёнными диагностическими данными. Отсутствующие данные следует
+пропускать. Системные поля `job`, `error`, `exception`, `connection`, `queue`,
+`attempts`, `job_uuid` и `index_name` всегда формируются пакетом и не могут быть
+заменены обогатителем.
+
+Ошибки самого обработчика или обогатителя не влияют на обработку события очереди.
+
+## Миграция существующих сервисов
+
+В `yescrow-app` после обновления пакета нужно удалить ручную регистрацию
+`LoggerDecorator` и общий метод `Work::failed()`, иначе сообщения будут
+дублироваться.
+
+В `files-app` можно установить `APP_LOGGER_DECORATE=false`, сохранив существующую
+маршрутизацию остальных логов. Monolog-процессор приложения должен сохранять явно
+переданный `index_name` failed-job сообщения.
